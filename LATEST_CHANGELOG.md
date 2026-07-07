@@ -1,6 +1,6 @@
-## v2.5.3 (patch)
+## v2.5.4 (patch)
 
-Changes since v2.5.2:
+Changes since v2.5.3:
 
-- Bump Microsoft.CodeAnalysis.Analyzers and Microsoft.CodeAnalysis.CSharp ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump the ktsu group with 2 updates ([@dependabot[bot]](https://github.com/dependabot[bot]))
 
