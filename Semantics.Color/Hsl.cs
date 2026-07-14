@@ -95,6 +95,61 @@ public readonly record struct Hsl(double H, double S, double L)
 	/// <returns>The HSL equivalent.</returns>
 	public static Hsl FromOklch(Oklch oklch) => FromOklab(oklch.ToOklab());
 
+	// Adjustments. Saturation and lightness are clamped to 0..1; hue is a free angle in degrees
+	// (normalized when converting out). These are the canonical HSL operations that the linear
+	// Color and gamma Srgb convenience wrappers delegate to.
+
+	/// <summary>Returns a copy with saturation replaced (clamped to 0..1).</summary>
+	/// <param name="saturation">The new saturation.</param>
+	/// <returns>The adjusted color.</returns>
+	public Hsl WithSaturation(double saturation) => this with { S = Clamp01(saturation) };
+
+	/// <summary>Returns a copy with saturation increased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to add.</param>
+	/// <returns>The adjusted color.</returns>
+	public Hsl SaturateBy(double amount) => this with { S = Clamp01(S + amount) };
+
+	/// <summary>Returns a copy with saturation decreased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to subtract.</param>
+	/// <returns>The adjusted color.</returns>
+	public Hsl DesaturateBy(double amount) => this with { S = Clamp01(S - amount) };
+
+	/// <summary>Returns a copy with saturation multiplied by <paramref name="factor"/> (clamped to 0..1).</summary>
+	/// <param name="factor">The multiplier.</param>
+	/// <returns>The adjusted color.</returns>
+	public Hsl MultiplySaturation(double factor) => this with { S = Clamp01(S * factor) };
+
+	/// <summary>Returns a fully desaturated (grayscale) copy, preserving lightness.</summary>
+	/// <returns>The grayscale color.</returns>
+	public Hsl ToGrayscale() => this with { S = 0.0 };
+
+	/// <summary>Returns a copy with lightness replaced (clamped to 0..1).</summary>
+	/// <param name="lightness">The new lightness.</param>
+	/// <returns>The adjusted color.</returns>
+	public Hsl WithLightness(double lightness) => this with { L = Clamp01(lightness) };
+
+	/// <summary>Returns a copy with lightness increased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to add.</param>
+	/// <returns>The adjusted color.</returns>
+	public Hsl LightenBy(double amount) => this with { L = Clamp01(L + amount) };
+
+	/// <summary>Returns a copy with lightness decreased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to subtract.</param>
+	/// <returns>The adjusted color.</returns>
+	public Hsl DarkenBy(double amount) => this with { L = Clamp01(L - amount) };
+
+	/// <summary>Returns a copy with lightness multiplied by <paramref name="factor"/> (clamped to 0..1).</summary>
+	/// <param name="factor">The multiplier.</param>
+	/// <returns>The adjusted color.</returns>
+	public Hsl MultiplyLightness(double factor) => this with { L = Clamp01(L * factor) };
+
+	/// <summary>Returns a copy with its hue offset by <paramref name="degrees"/> around the wheel (wraps at 360).</summary>
+	/// <param name="degrees">The hue offset in degrees.</param>
+	/// <returns>The adjusted color.</returns>
+	public Hsl OffsetHue(double degrees) => this with { H = NormalizeHue(H + degrees) };
+
+	private static double Clamp01(double value) => value < 0.0 ? 0.0 : value > 1.0 ? 1.0 : value;
+
 	internal static double NormalizeHue(double h)
 	{
 		double r = h % 360.0;

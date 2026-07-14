@@ -168,4 +168,61 @@ public readonly partial record struct Color
 
 		return result;
 	}
+
+	// Convenience adjustments. The cylindrical ops forward to the canonical HSL operations on Hsl
+	// (round-tripping through the gamma boundary and preserving alpha); reach for ToOklch() when you
+	// want perceptually-uniform lightness/chroma instead. Invert is a per-channel negative in sRGB.
+
+	/// <summary>Returns a copy with its HSL saturation replaced (clamped to 0..1).</summary>
+	/// <param name="saturation">The new saturation.</param>
+	/// <returns>The adjusted color.</returns>
+	public Color WithSaturation(double saturation) => FromHsl(ToHsl().WithSaturation(saturation), A);
+
+	/// <summary>Returns a copy with its HSL saturation increased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to add to saturation.</param>
+	/// <returns>The adjusted color.</returns>
+	public Color SaturateBy(double amount) => FromHsl(ToHsl().SaturateBy(amount), A);
+
+	/// <summary>Returns a copy with its HSL saturation decreased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to subtract from saturation.</param>
+	/// <returns>The adjusted color.</returns>
+	public Color DesaturateBy(double amount) => FromHsl(ToHsl().DesaturateBy(amount), A);
+
+	/// <summary>Returns a copy with its HSL saturation multiplied by <paramref name="factor"/> (clamped to 0..1).</summary>
+	/// <param name="factor">The saturation multiplier.</param>
+	/// <returns>The adjusted color.</returns>
+	public Color MultiplySaturation(double factor) => FromHsl(ToHsl().MultiplySaturation(factor), A);
+
+	/// <summary>Returns a fully desaturated (grayscale) copy, preserving lightness and alpha.</summary>
+	/// <returns>The grayscale color.</returns>
+	public Color ToGrayscale() => FromHsl(ToHsl().ToGrayscale(), A);
+
+	/// <summary>Returns a copy with its HSL lightness replaced (clamped to 0..1).</summary>
+	/// <param name="lightness">The new lightness.</param>
+	/// <returns>The adjusted color.</returns>
+	public Color WithLightness(double lightness) => FromHsl(ToHsl().WithLightness(lightness), A);
+
+	/// <summary>Returns a copy with its HSL lightness increased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to add to lightness.</param>
+	/// <returns>The adjusted color.</returns>
+	public Color LightenBy(double amount) => FromHsl(ToHsl().LightenBy(amount), A);
+
+	/// <summary>Returns a copy with its HSL lightness decreased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to subtract from lightness.</param>
+	/// <returns>The adjusted color.</returns>
+	public Color DarkenBy(double amount) => FromHsl(ToHsl().DarkenBy(amount), A);
+
+	/// <summary>Returns a copy with its HSL lightness multiplied by <paramref name="factor"/> (clamped to 0..1).</summary>
+	/// <param name="factor">The lightness multiplier.</param>
+	/// <returns>The adjusted color.</returns>
+	public Color MultiplyLightness(double factor) => FromHsl(ToHsl().MultiplyLightness(factor), A);
+
+	/// <summary>Returns a copy with its hue offset by <paramref name="degrees"/> around the color wheel (wraps at 360).</summary>
+	/// <param name="degrees">The hue offset in degrees.</param>
+	/// <returns>The adjusted color.</returns>
+	public Color OffsetHue(double degrees) => FromHsl(ToHsl().OffsetHue(degrees), A);
+
+	/// <summary>Returns the per-channel inverse (photographic negative), computed in gamma-encoded sRGB and preserving alpha.</summary>
+	/// <returns>The inverted color.</returns>
+	public Color Invert() => FromSrgb(ToSrgb().Invert(), A);
 }

@@ -76,6 +76,63 @@ public readonly record struct Srgb(double R, double G, double B)
 	/// <returns>The sRGB equivalent.</returns>
 	public static Srgb FromOklch(Oklch oklch) => FromOklab(oklch.ToOklab());
 
+	/// <summary>Returns the per-channel inverse (photographic negative) in gamma-encoded space.</summary>
+	/// <returns>The inverted color.</returns>
+	public Srgb Invert() => new(1.0 - R, 1.0 - G, 1.0 - B);
+
+	// Cylindrical adjustments. sRGB has no saturation/lightness/hue axes of its own, so these route
+	// through HSL (a within-family hop, no gamma round-trip) and return sRGB. Same semantics as the
+	// HSL operations of the same name.
+
+	/// <summary>Returns a copy with HSL saturation replaced (clamped to 0..1).</summary>
+	/// <param name="saturation">The new saturation.</param>
+	/// <returns>The adjusted color.</returns>
+	public Srgb WithSaturation(double saturation) => ToHsl().WithSaturation(saturation).ToSrgb();
+
+	/// <summary>Returns a copy with HSL saturation increased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to add.</param>
+	/// <returns>The adjusted color.</returns>
+	public Srgb SaturateBy(double amount) => ToHsl().SaturateBy(amount).ToSrgb();
+
+	/// <summary>Returns a copy with HSL saturation decreased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to subtract.</param>
+	/// <returns>The adjusted color.</returns>
+	public Srgb DesaturateBy(double amount) => ToHsl().DesaturateBy(amount).ToSrgb();
+
+	/// <summary>Returns a copy with HSL saturation multiplied by <paramref name="factor"/> (clamped to 0..1).</summary>
+	/// <param name="factor">The multiplier.</param>
+	/// <returns>The adjusted color.</returns>
+	public Srgb MultiplySaturation(double factor) => ToHsl().MultiplySaturation(factor).ToSrgb();
+
+	/// <summary>Returns a fully desaturated (grayscale) copy, preserving lightness.</summary>
+	/// <returns>The grayscale color.</returns>
+	public Srgb ToGrayscale() => ToHsl().ToGrayscale().ToSrgb();
+
+	/// <summary>Returns a copy with HSL lightness replaced (clamped to 0..1).</summary>
+	/// <param name="lightness">The new lightness.</param>
+	/// <returns>The adjusted color.</returns>
+	public Srgb WithLightness(double lightness) => ToHsl().WithLightness(lightness).ToSrgb();
+
+	/// <summary>Returns a copy with HSL lightness increased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to add.</param>
+	/// <returns>The adjusted color.</returns>
+	public Srgb LightenBy(double amount) => ToHsl().LightenBy(amount).ToSrgb();
+
+	/// <summary>Returns a copy with HSL lightness decreased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to subtract.</param>
+	/// <returns>The adjusted color.</returns>
+	public Srgb DarkenBy(double amount) => ToHsl().DarkenBy(amount).ToSrgb();
+
+	/// <summary>Returns a copy with HSL lightness multiplied by <paramref name="factor"/> (clamped to 0..1).</summary>
+	/// <param name="factor">The multiplier.</param>
+	/// <returns>The adjusted color.</returns>
+	public Srgb MultiplyLightness(double factor) => ToHsl().MultiplyLightness(factor).ToSrgb();
+
+	/// <summary>Returns a copy with its hue offset by <paramref name="degrees"/> around the wheel (wraps at 360).</summary>
+	/// <param name="degrees">The hue offset in degrees.</param>
+	/// <returns>The adjusted color.</returns>
+	public Srgb OffsetHue(double degrees) => ToHsl().OffsetHue(degrees).ToSrgb();
+
 	private static double DecodeChannel(double s) =>
 		s <= 0.04045 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4);
 

@@ -25,6 +25,7 @@ On top of that foundation the package adds perceptual operations in the Oklab co
 - **Interop**: hex parse and format (`#RGB`, `#RRGGBB`, `#RRGGBBAA`), 8-bit byte tuples, and linear or sRGB `Vector3` / `Vector4` output (the sRGB vectors are what ImGui expects).
 - **WCAG accessibility**: relative luminance, contrast ratio (1..21), conformance rating against a background, and `AdjustForContrast` which binary-searches Oklab lightness to hit a target while preserving hue and chroma.
 - **Perceptual operations**: Oklab distance (`DistanceTo`), perceptually uniform mixing (`MixOklab`), and Oklab gradients (`Gradient`), alongside plain linear `Lerp`.
+- **Adjustments**: lighten/darken, saturate/desaturate, hue offset, grayscale, and invert. HSL-based on `Color`, `Hsl`, and `Srgb`; perceptually-uniform (lightness/chroma) variants on `Oklch`.
 - **Named colors**: a CSS/X11 subset with case-insensitive lookup.
 
 ## Installation
@@ -117,6 +118,22 @@ Srgb srgb = Oklch.FromHsl(hsl).ToSrgb();
 Color linear = hsl.ToColor();       // every satellite also has ToColor() / FromColor()
 ```
 
+### Adjusting colors
+
+```csharp
+using ktsu.Semantics.Color;
+
+Color c = Color.FromHex("#3366CC");
+
+Color hover = c.LightenBy(0.1);          // HSL lightness, alpha preserved
+Color muted = c.DesaturateBy(0.3);       // HSL saturation
+Color accent = c.OffsetHue(30);          // rotate hue 30 degrees
+Color negative = c.Invert();             // per-channel negative in sRGB
+
+// For perceptually-uniform tinting, adjust in Oklch instead of HSL
+Color perceptualHover = c.ToOklch().LightenBy(0.1).ToColor(c.A);
+```
+
 ## API Reference
 
 ### `Color`
@@ -151,6 +168,18 @@ The canonical color: linear RGBA, each channel `double` in 0..1. A `readonly rec
 | `Lerp(other, t)` | `Color` | Linear-RGB interpolation. |
 | `Gradient(to, steps)` | `IReadOnlyList<Color>` | Oklab gradient, inclusive of endpoints (`steps >= 2`). |
 
+#### Adjustments
+
+Convenience adjustments on `Color` operate in HSL and preserve alpha; for perceptually-uniform lightness and chroma use the `Oklch` equivalents via `ToOklch()`. All are also available natively on `Hsl` (returning `Hsl`) and `Srgb` (returning `Srgb`).
+
+| Name | Return Type | Description |
+|------|-------------|-------------|
+| `WithSaturation(s)` / `SaturateBy(a)` / `DesaturateBy(a)` / `MultiplySaturation(f)` | `Color` | Set or shift HSL saturation (clamped to 0..1). |
+| `WithLightness(l)` / `LightenBy(a)` / `DarkenBy(a)` / `MultiplyLightness(f)` | `Color` | Set or shift HSL lightness (clamped to 0..1). |
+| `OffsetHue(degrees)` | `Color` | Rotate hue around the wheel (wraps at 360). |
+| `ToGrayscale()` | `Color` | Drop saturation, keeping lightness. |
+| `Invert()` | `Color` | Per-channel negative, computed in gamma-encoded sRGB. |
+
 ### Supporting types
 
 | Type | Description | Base conversion |
@@ -161,6 +190,8 @@ The canonical color: linear RGBA, each channel `double` in 0..1. A `readonly rec
 | `Oklch` | Polar form of Oklab. | `ToOklab` / `FromOklab` |
 | `AccessibilityLevel` | enum: `Fail = 0`, `AA = 1`, `AAA = 2`. | — |
 | `NamedColors` | Common colors (`Black`, `White`, `Red`, `Orange`, `Transparent`, ...), plus `All` and `TryGet(name, out color)` with case-insensitive keys. | — |
+
+The satellite spaces carry their own adjustments: `Hsl` and `Srgb` have the full HSL set (saturation/lightness/hue/grayscale; `Srgb` routes these through HSL and also adds `Invert()`), while `Oklch` exposes perceptually-uniform `WithLightness`/`LightenBy`/`DarkenBy`, chroma ops (`WithChroma`/`MultiplyChroma`/`SaturateBy`/`DesaturateBy`/`ToGrayscale`), and `OffsetHue`. `Color`'s adjustment methods forward to `Hsl`.
 
 #### Converting between spaces
 

@@ -67,4 +67,53 @@ public readonly record struct Oklch(double L, double C, double H)
 	/// <param name="hsv">The HSV color.</param>
 	/// <returns>The Oklch equivalent.</returns>
 	public static Oklch FromHsv(Hsv hsv) => FromOklab(Oklab.FromHsv(hsv));
+
+	// Perceptual adjustments. Unlike HSL, these operate on Oklab's perceptually-uniform lightness
+	// and chroma, so "lighten by 0.1" or "halve the chroma" look consistent across hues. Lightness
+	// is clamped to 0..1; chroma is floored at 0 but has no fixed ceiling (raising it may leave the
+	// sRGB gamut, so Clamp/gamut-map after converting back if needed).
+
+	/// <summary>Returns a copy with perceptual lightness replaced (clamped to 0..1).</summary>
+	/// <param name="lightness">The new lightness.</param>
+	/// <returns>The adjusted color.</returns>
+	public Oklch WithLightness(double lightness) => this with { L = Color.Clamp01(lightness) };
+
+	/// <summary>Returns a copy with perceptual lightness increased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to add.</param>
+	/// <returns>The adjusted color.</returns>
+	public Oklch LightenBy(double amount) => this with { L = Color.Clamp01(L + amount) };
+
+	/// <summary>Returns a copy with perceptual lightness decreased by <paramref name="amount"/> (clamped to 0..1).</summary>
+	/// <param name="amount">The amount to subtract.</param>
+	/// <returns>The adjusted color.</returns>
+	public Oklch DarkenBy(double amount) => this with { L = Color.Clamp01(L - amount) };
+
+	/// <summary>Returns a copy with chroma replaced (floored at 0).</summary>
+	/// <param name="chroma">The new chroma.</param>
+	/// <returns>The adjusted color.</returns>
+	public Oklch WithChroma(double chroma) => this with { C = Math.Max(0.0, chroma) };
+
+	/// <summary>Returns a copy with chroma multiplied by <paramref name="factor"/> (floored at 0).</summary>
+	/// <param name="factor">The multiplier.</param>
+	/// <returns>The adjusted color.</returns>
+	public Oklch MultiplyChroma(double factor) => this with { C = Math.Max(0.0, C * factor) };
+
+	/// <summary>Returns a copy with chroma increased by <paramref name="amount"/> (may leave the sRGB gamut).</summary>
+	/// <param name="amount">The amount to add.</param>
+	/// <returns>The adjusted color.</returns>
+	public Oklch SaturateBy(double amount) => this with { C = Math.Max(0.0, C + amount) };
+
+	/// <summary>Returns a copy with chroma decreased by <paramref name="amount"/> (floored at 0).</summary>
+	/// <param name="amount">The amount to subtract.</param>
+	/// <returns>The adjusted color.</returns>
+	public Oklch DesaturateBy(double amount) => this with { C = Math.Max(0.0, C - amount) };
+
+	/// <summary>Returns a fully desaturated (neutral) copy, preserving lightness.</summary>
+	/// <returns>The grayscale color.</returns>
+	public Oklch ToGrayscale() => this with { C = 0.0 };
+
+	/// <summary>Returns a copy with its hue offset by <paramref name="degrees"/> around the wheel (wraps at 360).</summary>
+	/// <param name="degrees">The hue offset in degrees.</param>
+	/// <returns>The adjusted color.</returns>
+	public Oklch OffsetHue(double degrees) => this with { H = Hsl.NormalizeHue(H + degrees) };
 }
