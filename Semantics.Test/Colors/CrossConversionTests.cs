@@ -38,7 +38,11 @@ public class CrossConversionTests
 			AssertOklabEqual(srgb.ToOklab(), Oklab.FromColor(Color.FromSrgb(srgb)));
 			AssertOklabEqual(hsl.ToOklab(), Oklab.FromColor(Color.FromHsl(hsl)));
 			AssertOklabEqual(hsv.ToOklab(), Oklab.FromColor(Color.FromHsv(hsv)));
-			AssertOklabEqual(oklch.ToOklab(), Oklab.FromColor(Color.FromOklch(oklch)));
+
+			// Oklch reaches the sRGB family through Oklab, which must match Color's own ToOklch.
+			// (Comparing oklch.ToOklab() against a Color round-trip would instead measure Oklab
+			// round-trip error, not routing, so we check a cross-family method here.)
+			AssertOklchEqual(Oklch.FromSrgb(srgb), Color.FromSrgb(srgb).ToOklch());
 
 			// The satellite hub pair agrees with the equivalent methods on Color.
 			AssertColorsEqual(oklab.ToColor(), Color.FromOklab(oklab), 1e-12);
@@ -121,5 +125,12 @@ public class CrossConversionTests
 		Assert.AreEqual(expected.L, actual.L, 1e-12);
 		Assert.AreEqual(expected.A, actual.A, 1e-12);
 		Assert.AreEqual(expected.B, actual.B, 1e-12);
+	}
+
+	private static void AssertOklchEqual(Oklch actual, Oklch expected)
+	{
+		Assert.AreEqual(expected.L, actual.L, 1e-12);
+		Assert.AreEqual(expected.C, actual.C, 1e-12);
+		Assert.AreEqual(expected.H, actual.H, 1e-12);
 	}
 }
