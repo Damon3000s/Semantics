@@ -21,7 +21,7 @@ On top of that foundation the package adds perceptual operations in the Oklab co
 ## Features
 
 - **Linear RGB as the hub**: `Color` stores linear RGBA in 0..1, and all mixing, interpolation, and luminance math happens there.
-- **Color spaces**: sRGB (`Srgb`), HSL (`Hsl`), HSV (`Hsv`), Oklab (`Oklab`), and Oklch (`Oklch`), each with `From*` / `To*` conversions on `Color`.
+- **Color spaces**: sRGB (`Srgb`), HSL (`Hsl`), HSV (`Hsv`), Oklab (`Oklab`), and Oklch (`Oklch`). Every color type (including `Color`) converts directly to and from every other through `From*` / `To*` methods. Each hop is routed through the nearest shared hub, so a conversion crosses the gamma boundary at most once and never takes a redundant gamma round-trip.
 - **Interop**: hex parse and format (`#RGB`, `#RRGGBB`, `#RRGGBBAA`), 8-bit byte tuples, and linear or sRGB `Vector3` / `Vector4` output (the sRGB vectors are what ImGui expects).
 - **WCAG accessibility**: relative luminance, contrast ratio (1..21), conformance rating against a background, and `AdjustForContrast` which binary-searches Oklab lightness to hit a target while preserving hue and chroma.
 - **Perceptual operations**: Oklab distance (`DistanceTo`), perceptually uniform mixing (`MixOklab`), and Oklab gradients (`Gradient`), alongside plain linear `Lerp`.
@@ -104,6 +104,19 @@ Color brighter = Color.FromOklch(lch with { L = lch.L + 0.1 });
 Vector4 imguiColor = complementary.ToSrgbVector4();             // gamma-encoded RGBA for ImGui
 ```
 
+Conversions are not limited to `Color`. Any color type converts straight to any other, so you can stay in whichever space fits the task:
+
+```csharp
+using ktsu.Semantics.Color;
+
+Hsl hsl = Color.FromHex("#3366CC").ToHsl();
+
+Oklab lab = hsl.ToOklab();          // sRGB family -> perceptual family, through linear Color
+Hsv hsv = lab.ToHsv();              // and back again
+Srgb srgb = Oklch.FromHsl(hsl).ToSrgb();
+Color linear = hsl.ToColor();       // every satellite also has ToColor() / FromColor()
+```
+
 ## API Reference
 
 ### `Color`
@@ -140,14 +153,24 @@ The canonical color: linear RGBA, each channel `double` in 0..1. A `readonly rec
 
 ### Supporting types
 
-| Type | Description |
-|------|-------------|
-| `Srgb` | Gamma-encoded sRGB, the only gamma-boundary crossing. `ToLinear()`, `FromLinear(Color)`. |
-| `Hsl` / `Hsv` | Hue in degrees, saturation and lightness/value in 0..1, defined over sRGB. `FromSrgb` / `ToSrgb`. |
-| `Oklab` | Perceptual color space (Ottosson 2020). `FromColor` / `ToColor` / `ToOklch`. |
-| `Oklch` | Polar form of Oklab. `ToOklab`. |
-| `AccessibilityLevel` | enum: `Fail = 0`, `AA = 1`, `AAA = 2`. |
-| `NamedColors` | Common colors (`Black`, `White`, `Red`, `Orange`, `Transparent`, ...), plus `All` and `TryGet(name, out color)` with case-insensitive keys. |
+| Type | Description | Base conversion |
+|------|-------------|-----------------|
+| `Srgb` | Gamma-encoded sRGB, the only gamma-boundary crossing. | `ToLinear()` / `FromLinear(Color)` (also as `ToColor()` / `FromColor()`) |
+| `Hsl` / `Hsv` | Hue in degrees, saturation and lightness/value in 0..1, defined over sRGB. | `FromSrgb` / `ToSrgb` |
+| `Oklab` | Perceptual color space (Ottosson 2020). | `FromColor` / `ToColor`; polar via `ToOklch` / `FromOklch` |
+| `Oklch` | Polar form of Oklab. | `ToOklab` / `FromOklab` |
+| `AccessibilityLevel` | enum: `Fail = 0`, `AA = 1`, `AAA = 2`. | — |
+| `NamedColors` | Common colors (`Black`, `White`, `Red`, `Orange`, `Transparent`, ...), plus `All` and `TryGet(name, out color)` with case-insensitive keys. | — |
+
+#### Converting between spaces
+
+Beyond the base conversion listed above, every color type (including `Color`) exposes `To{Space}()` and `From{Space}(...)` for every other space, plus a uniform `ToColor()` / `FromColor(Color)` pair. Those extra methods are one-liners that reuse the base conversions rather than reimplementing any color math, routed through the nearest shared hub:
+
+- **Within the sRGB family** (`Srgb`, `Hsl`, `Hsv`) conversions route through `Srgb`, so no gamma decode/encode happens.
+- **Within the perceptual family** (`Oklab`, `Oklch`) conversions route through `Oklab`.
+- **Across the two families** conversions route through the linear `Color` hub, crossing the gamma boundary exactly once.
+
+So `srgb.ToHsl()` is the direct HSL definition, while `hsl.ToOklab()` goes `Hsl → Srgb → linear Color → Oklab`. Because the satellite spaces carry no alpha, cross-space conversions preserve only the color; use the `Color` overloads (or `WithAlpha`) when you need alpha.
 
 `FromHex` throws `ArgumentException` for lengths other than 3, 6, or 8, and `Gradient` throws `ArgumentException` for `steps < 2`.
 

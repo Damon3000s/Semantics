@@ -67,6 +67,42 @@ public readonly record struct Oklab(double L, double A, double B)
 		return new Oklch(L, c, h);
 	}
 
+	// Conversions to the other color-space types. Oklab and Oklch share the perceptual base, so
+	// that hop stays within the family. Reaching the sRGB family crosses the gamma boundary once,
+	// through the linear Color hub.
+
+	/// <summary>Creates an Oklab color from its polar <see cref="Oklch"/> form.</summary>
+	/// <param name="oklch">The Oklch color.</param>
+	/// <returns>The Oklab equivalent.</returns>
+	public static Oklab FromOklch(Oklch oklch) => oklch.ToOklab();
+
+	/// <summary>Converts this Oklab color to <see cref="Srgb"/> (via the linear <see cref="Color"/> hub).</summary>
+	/// <returns>The sRGB equivalent.</returns>
+	public Srgb ToSrgb() => Srgb.FromColor(ToColor());
+
+	/// <summary>Creates an Oklab color from an <see cref="Srgb"/> value (via the linear <see cref="Color"/> hub).</summary>
+	/// <param name="srgb">The sRGB color.</param>
+	/// <returns>The Oklab equivalent.</returns>
+	public static Oklab FromSrgb(Srgb srgb) => FromColor(srgb.ToColor());
+
+	/// <summary>Converts this Oklab color to <see cref="Hsl"/> (via the linear <see cref="Color"/> hub).</summary>
+	/// <returns>The HSL equivalent.</returns>
+	public Hsl ToHsl() => Hsl.FromColor(ToColor());
+
+	/// <summary>Creates an Oklab color from an <see cref="Hsl"/> value (via the linear <see cref="Color"/> hub).</summary>
+	/// <param name="hsl">The HSL color.</param>
+	/// <returns>The Oklab equivalent.</returns>
+	public static Oklab FromHsl(Hsl hsl) => FromColor(hsl.ToColor());
+
+	/// <summary>Converts this Oklab color to <see cref="Hsv"/> (via the linear <see cref="Color"/> hub).</summary>
+	/// <returns>The HSV equivalent.</returns>
+	public Hsv ToHsv() => Hsv.FromColor(ToColor());
+
+	/// <summary>Creates an Oklab color from an <see cref="Hsv"/> value (via the linear <see cref="Color"/> hub).</summary>
+	/// <param name="hsv">The HSV color.</param>
+	/// <returns>The Oklab equivalent.</returns>
+	public static Oklab FromHsv(Hsv hsv) => FromColor(hsv.ToColor());
+
 	// netstandard2.0 lacks Math.Cbrt; one Newton-Raphson refinement after a
 	// sign-aware Pow gives a correctly-rounded result on all target frameworks.
 	private static double Cbrt(double value)

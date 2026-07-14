@@ -3,9 +3,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Test packages -->
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.8.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
+    <!-- Test packages: CodeCoverage and TrxReport versions are supplied by MSTest.Sdk;
+         do not pin them here or CPM reports duplicate PackageVersion items (NU1506). -->
     <!-- Semantics runtime packages -->
     <PackageVersion Include="ktsu.PreciseNumber" Version="1.7.18" />
     <PackageVersion Include="ktsu.RoundTripStringJsonConverter" Version="1.0.20" />

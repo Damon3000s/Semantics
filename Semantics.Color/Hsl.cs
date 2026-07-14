@@ -54,6 +54,47 @@ public readonly record struct Hsl(double H, double S, double L)
 			HueToChannel(p, q, h - (1.0 / 3.0)));
 	}
 
+	// Conversions to the other color-space types. HSL is defined over sRGB, so hops to sRGB and
+	// HSV stay within the family (no gamma round-trip). Reaching the linear Color hub and the
+	// Oklab family crosses the gamma boundary once.
+
+	/// <summary>Converts this HSL color to a linear <see cref="Color"/> (via <see cref="Srgb"/>).</summary>
+	/// <param name="a">Straight alpha for the result (default 1.0).</param>
+	/// <returns>The linear-RGB equivalent.</returns>
+	public Color ToColor(double a = 1.0) => ToSrgb().ToLinear(a);
+
+	/// <summary>Creates an HSL color from a linear <see cref="Color"/> (via <see cref="Srgb"/>).</summary>
+	/// <param name="color">The linear color.</param>
+	/// <returns>The HSL equivalent.</returns>
+	public static Hsl FromColor(Color color) => FromSrgb(Srgb.FromLinear(color));
+
+	/// <summary>Converts this HSL color to <see cref="Hsv"/> (via <see cref="Srgb"/>).</summary>
+	/// <returns>The HSV equivalent.</returns>
+	public Hsv ToHsv() => Hsv.FromSrgb(ToSrgb());
+
+	/// <summary>Creates an HSL color from an <see cref="Hsv"/> value (via <see cref="Srgb"/>).</summary>
+	/// <param name="hsv">The HSV color.</param>
+	/// <returns>The HSL equivalent.</returns>
+	public static Hsl FromHsv(Hsv hsv) => FromSrgb(hsv.ToSrgb());
+
+	/// <summary>Converts this HSL color to <see cref="Oklab"/> (via the linear <see cref="Color"/> hub).</summary>
+	/// <returns>The Oklab equivalent.</returns>
+	public Oklab ToOklab() => Oklab.FromColor(ToColor());
+
+	/// <summary>Creates an HSL color from an <see cref="Oklab"/> value (via the linear <see cref="Color"/> hub).</summary>
+	/// <param name="oklab">The Oklab color.</param>
+	/// <returns>The HSL equivalent.</returns>
+	public static Hsl FromOklab(Oklab oklab) => FromColor(oklab.ToColor());
+
+	/// <summary>Converts this HSL color to <see cref="Oklch"/> (via <see cref="Oklab"/>).</summary>
+	/// <returns>The Oklch equivalent.</returns>
+	public Oklch ToOklch() => ToOklab().ToOklch();
+
+	/// <summary>Creates an HSL color from an <see cref="Oklch"/> value (via <see cref="Oklab"/>).</summary>
+	/// <param name="oklch">The Oklch color.</param>
+	/// <returns>The HSL equivalent.</returns>
+	public static Hsl FromOklch(Oklch oklch) => FromOklab(oklch.ToOklab());
+
 	internal static double NormalizeHue(double h)
 	{
 		double r = h % 360.0;
