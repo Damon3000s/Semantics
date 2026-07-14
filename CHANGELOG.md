@@ -2,6 +2,7 @@
 
 Changes since v2.5.0:
 
+- [patch] Fix Oklch assertion in color cross-conversion tests ([@matt-edmondson](https://github.com/matt-edmondson))
 - [minor] Add cross-space conversions between all color types ([@matt-edmondson](https://github.com/matt-edmondson))
 - fix(music): use ValueTuple.GetHashCode instead of System.HashCode for netstandard2.0 compatibility ([@matt-edmondson](https://github.com/matt-edmondson))
 - refactor(music): split Progression.TryParse into helpers to cut cognitive complexity and remove always-true check (SonarQube S3776/S2583) ([@matt-edmondson](https://github.com/matt-edmondson))
