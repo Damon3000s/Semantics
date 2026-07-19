@@ -1,6 +1,7 @@
 ## v2.7.3
 
-No significant changes detected since v2.7.3.
+Changes since v2.7.3:
+
 
 ## v2.7.3 (patch)
 
